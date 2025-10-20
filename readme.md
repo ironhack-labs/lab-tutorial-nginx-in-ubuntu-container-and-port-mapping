@@ -1,4 +1,6 @@
-<!-- # Lab: Nginx in Ubuntu container — first without, then with port mapping -->
+![logo_ironhack_blue 7](https://user-images.githubusercontent.com/23629340/40541063-a07a0a8a-601a-11e8-91b5-2f13e4e6b441.png)
+
+# Lab | Nginx in Ubuntu container — first without, then with port mapping
 
 Containers have their **own** network stack. A service listening on `localhost:80` *inside* a container isn’t reachable from the host unless you **map a host port** to a **container port**.
 With Docker this is done using `-p HOST_PORT:CONTAINER_PORT` (e.g., `-p 8080:80`). Without it, `curl localhost` on the host will fail, even though the service is healthy inside the container.
