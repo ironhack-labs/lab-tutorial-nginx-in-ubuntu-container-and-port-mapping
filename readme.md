@@ -144,6 +144,76 @@ To complete this lab:
 * What happens if you use `-p 80:80` instead and then visit `http://localhost`?
 * How would multiple containers avoid clashing on host ports?
 
+=============================================
+## Why did `curl localhost` fail in Part 1 but succeed in Part 2?
+
+In **Part 1**, the Nginx server was running inside the Docker container and listening on **port 80 inside the container**, but no port mapping was defined between the container and the host machine. Containers run in their own **network namespace**, so `localhost` inside the container refers to the container itself, not the host. Because there was no port forwarding configured, the host machine had no way to reach the container’s web server. Therefore, `curl localhost` from the host failed with a connection error.
+
+In **Part 2**, the container was started with the option:
+
+
+-p 8080:80
+
+
+This created a **port mapping** where **host port 8080 is forwarded to container port 80**. Docker configured a NAT rule so that any request sent to `localhost:8080` on the host machine is forwarded to the Nginx server running inside the container. As a result, `curl localhost:8080` succeeded because the host could now reach the containerized web service.
+
+---
+
+## What happens if you use `-p 80:80` instead and then visit `http://localhost`?
+
+If the container is started with:
+
+
+-p 80:80
+
+
+Docker maps **host port 80 directly to container port 80**. In that case, the Nginx service inside the container becomes accessible directly through the default HTTP port on the host.
+
+Visiting:
+
+
+http://localhost
+
+
+in a browser (or running `curl http://localhost`) would successfully return the Nginx page from the container, because requests to the host’s port 80 are forwarded directly to port 80 inside the container.
+
+However, this only works if **port 80 is not already in use on the host**. If another service (such as Apache, IIS, or another container) is already using port 80, Docker will return a **port allocation error**.
+
+---
+
+## How would multiple containers avoid clashing on host ports?
+
+Multiple containers can run the same service internally (e.g., each listening on **port 80 inside the container**) while avoiding conflicts by mapping **different host ports** to the container port.
+
+For example:
+
+
+docker run -p 8080:80 nginx
+docker run -p 8081:80 nginx
+docker run -p 8082:80 nginx
+
+
+Each container still runs Nginx on **port 80 internally**, but Docker maps them to different host ports:
+
+| Container | Container Port | Host Port |
+|-----------|---------------|-----------|
+| nginx #1  | 80            | 8080      |
+| nginx #2  | 80            | 8081      |
+| nginx #3  | 80            | 8082      |
+
+This allows multiple containers to run the same service simultaneously while remaining accessible through different URLs such as:
+
+
+http://localhost:8080
+
+http://localhost:8081
+
+http://localhost:8082
+
+
+Docker handles the routing between the host network and each container through its **bridge networking and NAT port forwarding**.
+===============================================
+
 ### Common pitfalls & fixes
 
 * **Nginx “not found”** → forgot `apt-get update` before `apt-get install`.
